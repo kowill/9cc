@@ -16,10 +16,40 @@ typedef struct
     char *input;
 } Token;
 
+enum
+{
+    ND_NUM = 256,
+};
+
+typedef struct Node
+{
+    int type;
+    struct Node *lhs;
+    struct Node *rhs;
+    int val;
+} Node;
+
+Node *new_node(int op, Node *lhs, Node *rhs)
+{
+    Node *node = malloc(sizeof(Node));
+    node->type = op;
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+Node *new_node_num(int val)
+{
+    Node *node = malloc(sizeof(Node));
+    node->type = ND_NUM;
+    node->val = val;
+    return node;
+}
+
 Token *tokenize(char *p)
 {
     int i = 0;
-    Token *tokens = malloc(sizeof(Token) * 101);
+    Token *tokens = malloc(sizeof(Token) * 100);
 
     while (*p)
     {
@@ -57,6 +87,35 @@ Token *tokenize(char *p)
     tokens[i].input = p;
 
     return tokens;
+}
+
+int pos = 0;
+
+Node *term(Token *tokens)
+{
+    if (tokens[pos].type == TK_NUM)
+        return new_node_num(tokens[pos++].val);
+    fprintf(stderr, "不正なトークンです: %s\n", tokens[pos].input);
+    exit(1);
+}
+
+Node *expr(Token *tokens)
+{
+    Node *lhs = term(tokens);
+    if (tokens[pos].type == TK_EOF)
+        return lhs;
+    if (tokens[pos].type == '+')
+    {
+        pos++;
+        return new_node('+', lhs, expr(tokens));
+    }
+    if (tokens[pos].type == '-')
+    {
+        pos++;
+        return new_node('-', lhs, expr(tokens));
+    }
+    fprintf(stderr, "不正なトークンです: %s\n", tokens[pos].input);
+    exit(1);
 }
 
 int main(int argc, char **argv)
