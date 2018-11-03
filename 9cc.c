@@ -120,7 +120,7 @@ Node *mul(Token *tokens)
         return new_node('/', lhs, mul(tokens));
     }
 
-    error_token(&tokens[pos]);
+    return lhs;
 }
 
 Node *expr(Token *tokens)
@@ -141,6 +141,47 @@ Node *expr(Token *tokens)
     error_token(&tokens[pos]);
 }
 
+int idx =0;
+void gen(Node *node)
+{
+    if (node->type == ND_NUM)
+    {
+        printf("  push %d\n", node->val);
+        return;
+    }
+
+    gen(node->lhs);
+    gen(node->rhs);
+
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+
+    switch (node->type)
+    {
+    case '+':
+        printf("  add rax, rdi\n");
+        break;
+
+    case '-':
+        printf("  sub rax, rdi\n");
+        break;
+
+    case '*':
+        printf("  mul rdi\n");
+        break;
+
+    case '/':
+        printf("  mov rdx, 0\n");
+        printf("  div rdi\n");
+        break;
+
+    default:
+        fprintf(stderr, "対象外です: %d : %d\n", node->type, node->val);
+        return;
+    }
+    printf("  push rax\n");
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -150,63 +191,16 @@ int main(int argc, char **argv)
     }
 
     Token *tokens = tokenize(argv[1]);
+    Node *node = expr(tokens);
 
     // init part
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
     printf("main:\n");
 
-    int i = 0;
-    while (tokens[i].type != TK_EOF)
-    {
-        switch (tokens[i].type)
-        {
-        case TK_NUM:
-            printf("  mov rax, %d\n", tokens[i].val);
-            break;
+    gen(node);
 
-        case '+':
-            i++;
-            if (tokens[i].type != TK_NUM)
-                error_token(&tokens[i]);
-                
-            printf("  add rax, %d\n", tokens[i].val);
-            break;
-
-        case '-':
-            i++;
-            if (tokens[i].type != TK_NUM)
-                error_token(&tokens[i]);
-
-            printf("  sub rax, %d\n", tokens[i].val);
-            break;
-
-        case '*':
-            i++;
-            if (tokens[i].type != TK_NUM)
-                error_token(&tokens[i]);
-
-            printf("  mov rdi, %d\n", tokens[i].val);
-            printf("  mul rdi\n");
-            break;
-
-        case '/':
-            i++;
-            if (tokens[i].type != TK_NUM)
-                error_token(&tokens[i]);
-
-            printf("  mov rdi, %d\n", tokens[i].val);
-            printf("  mov rdx, 0\n");
-            printf("  div rdi\n");
-            break;
-
-        default:
-            fprintf(stderr, "対象外です: %d : %d\n", tokens[i].type, tokens[i].val);
-            return 1;
-        }
-        i++;
-    }
-
+    printf("  pop rax \n");
     printf("  ret \n");
     return 0;
 }
