@@ -184,7 +184,11 @@ Node *expr(Token *tokens)
 Node *assign(Token *tokens)
 {
     Node *lhs = expr(tokens);
-    if (tokens[pos].type == TK_EOF || tokens[pos].type == ';')
+    if (tokens[pos].type == TK_EOF)
+    {
+        return lhs;
+    }
+    if (tokens[pos].type == ';')
     {
         pos++;
         return lhs;
@@ -195,10 +199,26 @@ Node *assign(Token *tokens)
         return new_node('=', lhs, assign(tokens));
     }
 
-    error_token(&tokens[pos]);
+    return lhs;
 }
 
-int idx = 0;
+Node *code[100];
+
+Node *program(Token *tokens)
+{
+    Node *code = malloc(sizeof(Node) *100);
+    memset(code, 0, sizeof(code));
+    int num = 0;
+
+    while (tokens[pos].type != TK_EOF)
+    {
+        Node *node = assign(tokens);
+        code[num] = *node;
+        num++;
+    }
+
+    return code;
+}
 
 void gen_lval(Node *node)
 {
@@ -282,7 +302,7 @@ int main(int argc, char **argv)
     }
 
     Token *tokens = tokenize(argv[1]);
-    Node *node = assign(tokens);
+    Node *code = program(tokens);
 
     // init part
     printf(".intel_syntax noprefix\n");
@@ -294,9 +314,11 @@ int main(int argc, char **argv)
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, %d\n", 8 * 26); //26個分
 
-    gen(node);
-
-    printf("  pop rax \n");
+    for (int i = 0; code[i].type; i++)
+    {
+        gen(&code[i]);
+        printf("  pop rax\n");
+    }
 
     //epilogue
     printf("  mov rsp, rbp\n");
