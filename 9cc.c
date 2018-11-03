@@ -61,7 +61,7 @@ Token *tokenize(char *p)
 
         Token *t = &tokens[i];
 
-        if (*p == '+' || *p == '-' || *p == '*')
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/')
         {
             t->type = *p;
             t->input = p;
@@ -113,6 +113,11 @@ Node *mul(Token *tokens)
     {
         pos++;
         return new_node('*', lhs, mul(tokens));
+    }
+    if (tokens[pos].type == '/')
+    {
+        pos++;
+        return new_node('/', lhs, mul(tokens));
     }
 
     error_token(&tokens[pos]);
@@ -197,6 +202,21 @@ int main(int argc, char **argv)
             }
             printf("  mov rdi, %d\n", tokens[i].val);
             printf("  mul rdi\n");
+            i++;
+            continue;
+        }
+
+        if (tokens[i].type == '/')
+        {
+            i++;
+            if (tokens[i].type != TK_NUM)
+            {
+                fprintf(stderr, "token がおかしいです\n");
+                return 1;
+            }
+            printf("  mov rdi, %d\n", tokens[i].val);
+            printf("  mov rdx, 0\n");
+            printf("  div rdi\n");
             i++;
             continue;
         }
