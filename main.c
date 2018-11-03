@@ -3,6 +3,12 @@
 
 int main(int argc, char **argv)
 {
+    if (argc ==2 && !strcmp(argv[1], "-test"))
+    {
+        runtest();
+        return 0;
+    }
+
     if (argc != 2)
     {
         fprintf(stderr, "引数の数が不正です\n");
