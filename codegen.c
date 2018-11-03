@@ -1,37 +1,18 @@
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include "9cc.h"
 
-enum
+void error_token(Token *token)
 {
-    TK_NUM = 256,
-    TK_IDENT,
-    TK_EOF,
-};
+    fprintf(stderr, "不正なトークンです: %s\n", token->input);
+    exit(1);
+}
 
-typedef struct
+void error_node(Node *node)
 {
-    int type;
-    int val;
-    char *input;
-} Token;
-
-enum
-{
-    ND_NUM = 256,
-    ND_IDENT,
-};
-
-typedef struct Node
-{
-    int type;
-    struct Node *lhs;
-    struct Node *rhs;
-    int val;
-    char name;
-} Node;
-
+    fprintf(stderr, "不正なノードです: %d\n", node->type);
+    exit(1);
+}
 Node *new_node(int op, Node *lhs, Node *rhs)
 {
     Node *node = malloc(sizeof(Node));
@@ -57,71 +38,7 @@ Node *new_node_ident(char *c)
     return node;
 }
 
-Token *tokenize(char *p)
-{
-    int i = 0;
-    Token *tokens = malloc(sizeof(Token) * 100);
-
-    while (*p)
-    {
-        if (isspace(*p))
-        {
-            p++;
-            continue;
-        }
-
-        Token *t = &tokens[i];
-
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '=' || *p == ';')
-        {
-            t->type = *p;
-            t->input = p;
-            i++;
-            p++;
-            continue;
-        }
-
-        if (isdigit(*p))
-        {
-            t->type = TK_NUM;
-            t->input = p;
-            t->val = strtol(p, &p, 10);
-            i++;
-            continue;
-        }
-
-        if ('a' <= *p && *p <= 'z')
-        {
-            t->type = TK_IDENT;
-            t->input = p;
-            i++;
-            p++;
-            continue;
-        }
-
-        fprintf(stderr, "can not tokenize: %s\n", p);
-        exit(1);
-    }
-
-    tokens[i].type = TK_EOF;
-    tokens[i].input = p;
-
-    return tokens;
-}
-
 int pos = 0;
-
-void error_token(Token *token)
-{
-    fprintf(stderr, "不正なトークンです: %s\n", token->input);
-    exit(1);
-}
-
-void error_node(Node *node)
-{
-    fprintf(stderr, "不正なノードです: %d\n", node->type);
-    exit(1);
-}
 
 Node *expr(Token *tokens);
 
@@ -201,8 +118,6 @@ Node *assign(Token *tokens)
 
     return lhs;
 }
-
-Node *code[100];
 
 Node *program(Token *tokens)
 {
@@ -291,38 +206,4 @@ void gen(Node *node)
         return;
     }
     printf("  push rax\n");
-}
-
-int main(int argc, char **argv)
-{
-    if (argc != 2)
-    {
-        fprintf(stderr, "引数の数が不正です\n");
-        return 1;
-    }
-
-    Token *tokens = tokenize(argv[1]);
-    Node *code = program(tokens);
-
-    // init part
-    printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
-    printf("main:\n");
-
-    //prologue 変数領域
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", 8 * 26); //26個分
-
-    for (int i = 0; code[i].type; i++)
-    {
-        gen(&code[i]);
-        printf("  pop rax\n");
-    }
-
-    //epilogue
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
-    printf("  ret \n");
-    return 0;
 }
