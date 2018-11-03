@@ -61,7 +61,7 @@ Token *tokenize(char *p)
 
         Token *t = &tokens[i];
 
-        if (*p == '+' || *p == '-')
+        if (*p == '+' || *p == '-' || *p == '*')
         {
             t->type = *p;
             t->input = p;
@@ -91,17 +91,36 @@ Token *tokenize(char *p)
 
 int pos = 0;
 
+void error_token(Token *token)
+{
+    fprintf(stderr, "不正なトークンです: %s\n", token->input);
+    exit(1);
+}
+
 Node *term(Token *tokens)
 {
     if (tokens[pos].type == TK_NUM)
         return new_node_num(tokens[pos++].val);
-    fprintf(stderr, "不正なトークンです: %s\n", tokens[pos].input);
-    exit(1);
+    error_token(&tokens[pos]);
+}
+
+Node *mul(Token *tokens)
+{
+    Node *lhs = term(tokens);
+    if (tokens[pos].type == TK_EOF)
+        return lhs;
+    if (tokens[pos].type == '*')
+    {
+        pos++;
+        return new_node('*', lhs, mul(tokens));
+    }
+
+    error_token(&tokens[pos]);
 }
 
 Node *expr(Token *tokens)
 {
-    Node *lhs = term(tokens);
+    Node *lhs = mul(tokens);
     if (tokens[pos].type == TK_EOF)
         return lhs;
     if (tokens[pos].type == '+')
@@ -114,8 +133,7 @@ Node *expr(Token *tokens)
         pos++;
         return new_node('-', lhs, expr(tokens));
     }
-    fprintf(stderr, "不正なトークンです: %s\n", tokens[pos].input);
-    exit(1);
+    error_token(&tokens[pos]);
 }
 
 int main(int argc, char **argv)
@@ -165,6 +183,20 @@ int main(int argc, char **argv)
                 return 1;
             }
             printf("  sub rax, %d\n", tokens[i].val);
+            i++;
+            continue;
+        }
+
+        if (tokens[i].type == '*')
+        {
+            i++;
+            if (tokens[i].type != TK_NUM)
+            {
+                fprintf(stderr, "token がおかしいです\n");
+                return 1;
+            }
+            printf("  mov rdi, %d\n", tokens[i].val);
+            printf("  mul rdi\n");
             i++;
             continue;
         }
