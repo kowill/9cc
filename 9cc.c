@@ -156,72 +156,55 @@ int main(int argc, char **argv)
     printf(".global main\n");
     printf("main:\n");
 
-    if (tokens[0].type != TK_NUM)
-    {
-        fprintf(stderr, "token がおかしいです\n");
-        return 1;
-    }
-    printf("  mov rax, %d\n", tokens[0].val);
-
-    int i = 1;
+    int i = 0;
     while (tokens[i].type != TK_EOF)
     {
-        if (tokens[i].type == '+')
+        switch (tokens[i].type)
         {
+        case TK_NUM:
+            printf("  mov rax, %d\n", tokens[0].val);
+            break;
+
+        case '+':
             i++;
             if (tokens[i].type != TK_NUM)
-            {
-                fprintf(stderr, "token がおかしいです\n");
-                return 1;
-            }
+                error_token(&tokens[i]);
+                
             printf("  add rax, %d\n", tokens[i].val);
-            i++;
-            continue;
-        }
+            break;
 
-        if (tokens[i].type == '-')
-        {
+        case '-':
             i++;
             if (tokens[i].type != TK_NUM)
-            {
-                fprintf(stderr, "token がおかしいです\n");
-                return 1;
-            }
+                error_token(&tokens[i]);
+
             printf("  sub rax, %d\n", tokens[i].val);
-            i++;
-            continue;
-        }
+            break;
 
-        if (tokens[i].type == '*')
-        {
+        case '*':
             i++;
             if (tokens[i].type != TK_NUM)
-            {
-                fprintf(stderr, "token がおかしいです\n");
-                return 1;
-            }
+                error_token(&tokens[i]);
+
             printf("  mov rdi, %d\n", tokens[i].val);
             printf("  mul rdi\n");
-            i++;
-            continue;
-        }
+            break;
 
-        if (tokens[i].type == '/')
-        {
+        case '/':
             i++;
             if (tokens[i].type != TK_NUM)
-            {
-                fprintf(stderr, "token がおかしいです\n");
-                return 1;
-            }
+                error_token(&tokens[i]);
+
             printf("  mov rdi, %d\n", tokens[i].val);
             printf("  mov rdx, 0\n");
             printf("  div rdi\n");
-            i++;
-            continue;
-        }
+            break;
 
-        fprintf(stderr, "対象外です: %d : %d\n", tokens[i].type, tokens[i].val);
+        default:
+            fprintf(stderr, "対象外です: %d : %d\n", tokens[i].type, tokens[i].val);
+            return 1;
+        }
+        i++;
     }
 
     printf("  ret \n");
