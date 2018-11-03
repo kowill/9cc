@@ -162,7 +162,7 @@ int main(int argc, char **argv)
         switch (tokens[i].type)
         {
         case TK_NUM:
-            printf("  mov rax, %d\n", tokens[0].val);
+            printf("  mov rax, %d\n", tokens[i].val);
             break;
 
         case '+':
