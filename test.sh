@@ -21,4 +21,6 @@ try 255 255
 try 10 2+8
 try 2 8-6
 
+try 27 8-6+25
+
 echo OK
