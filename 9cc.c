@@ -61,7 +61,7 @@ Token *tokenize(char *p)
 
         Token *t = &tokens[i];
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/')
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')')
         {
             t->type = *p;
             t->input = p;
@@ -97,10 +97,22 @@ void error_token(Token *token)
     exit(1);
 }
 
+Node *expr(Token *tokens);
+
 Node *term(Token *tokens)
 {
     if (tokens[pos].type == TK_NUM)
         return new_node_num(tokens[pos++].val);
+    if (tokens[pos].type == '(')
+    {
+        pos++;
+        Node *node = expr(tokens);
+        if (tokens[pos].type == ')')
+        {
+            pos++;
+            return node;
+        }
+    }
     error_token(&tokens[pos]);
 }
 
@@ -138,10 +150,10 @@ Node *expr(Token *tokens)
         pos++;
         return new_node('-', lhs, expr(tokens));
     }
-    error_token(&tokens[pos]);
+    return lhs;
 }
 
-int idx =0;
+int idx = 0;
 void gen(Node *node)
 {
     if (node->type == ND_NUM)
