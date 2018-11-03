@@ -44,5 +44,10 @@ try 3 " 12/4"
 
 try 10 "a=10;"
 try 25 "z=25;"
+try 30 "z=5+10+15;"
+
+try 3 "a=b=c=3;"
+
+#try 1 "a=5;b=4;c=8;(a+b)-c;"
 
 echo OK

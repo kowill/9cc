@@ -184,18 +184,17 @@ Node *expr(Token *tokens)
 Node *assign(Token *tokens)
 {
     Node *lhs = expr(tokens);
-    if (tokens[pos].type == TK_EOF)
+    if (tokens[pos].type == TK_EOF || tokens[pos].type == ';')
+    {
+        pos++;
         return lhs;
+    }
     if (tokens[pos].type == '=')
     {
         pos++;
-        Node *node = new_node('=', lhs, expr(tokens));
-        if (tokens[pos].type == ';')
-        {
-            pos++;
-            return node;
-        }
+        return new_node('=', lhs, assign(tokens));
     }
+
     error_token(&tokens[pos]);
 }
 
