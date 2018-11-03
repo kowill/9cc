@@ -19,5 +19,6 @@ try 192 192
 try 255 255
 
 try 10 2+8
+try 2 8-6
 
 echo OK
